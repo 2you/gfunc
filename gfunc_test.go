@@ -4,6 +4,17 @@ import (
 	"testing"
 )
 
+func Test_XorEncrypt(t *testing.T) {
+	str1 := "异或数据原文，字符串显示。\nGoGoGo"
+	key := "异或key数据"
+	buf1 := []byte(str1)
+	buf2 := XorEncrypt(buf1, []byte(key))
+	t.Logf("原数据\n------------------------------------\n%s\n------------------------------------\n", string(buf1))
+	t.Logf("加密后\n------------------------------------\n%v\n------------------------------------\n", string(buf2))
+	buf3 := XorEncrypt(buf2, []byte(key))
+	t.Logf("解密后\n------------------------------------\n%v\n------------------------------------\n", string(buf3))
+}
+
 func Test_AES_CBC_Base64_Decrypt(t *testing.T) {
 	src1 := "ev2oYqyOpmrwAR4UnxwvcKZoKv88kP7fgyoEHTKxs2o="
 	key1 := "0123456789123456"
@@ -132,7 +143,7 @@ func Test_AppFilePath(t *testing.T) {
 }
 
 func Test_GetFileContent(t *testing.T) {
-	if _, err := GetFileContent("tcfunc.go"); err != nil {
+	if _, err := GetFileContent("gfunc.go"); err != nil {
 		t.Errorf("%s\n", err.Error())
 	}
 }

@@ -25,6 +25,18 @@ import (
 	"time"
 )
 
+func XorEncrypt(src []byte, key []byte) []byte {
+	ssize := len(src)
+	ret := make([]byte, ssize)
+	copy(ret, src)
+	for i := 0; i < len(key); i++ {
+		for j := 0; j < ssize; j++ {
+			ret[j] = ret[j] ^ key[i]
+		}
+	}
+	return ret
+}
+
 func DelphiTrim(v string) (ret string) {
 	ret = strings.Trim(v, "\r\n\t ")
 	return ret
