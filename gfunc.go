@@ -534,3 +534,27 @@ func GetFileContent(filename string) ([]byte, error) {
 	data, err := ioutil.ReadAll(fptr)
 	return data, err
 }
+
+//获取文件的大小(单位是字节)
+func GetFileSize(filename string) int64 {
+	fileinfo, err := os.Stat(filename)
+	if err != nil && !os.IsExist(err) {
+		return 0
+	}
+	return fileinfo.Size()
+}
+
+func AppendStr2File(filename string, content string) error {
+	return AppendBytes2File(filename, []byte(content))
+}
+
+func AppendBytes2File(filename string, content []byte) error {
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0660)
+	if err != nil {
+		return err
+	}
+	_, err = file.Write(content)
+	file.Close()
+	return err
+}
+
