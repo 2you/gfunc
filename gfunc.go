@@ -558,3 +558,6 @@ func AppendBytes2File(filename string, content []byte) error {
 	return err
 }
 
+func FileRename(srcname, dstname string) error {
+	return os.Rename(srcname, dstname)
+}
