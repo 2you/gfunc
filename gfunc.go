@@ -25,6 +25,67 @@ import (
 	"time"
 )
 
+func CombineSplit2Index(m, n int) (retv [][]int, retn int) {
+	ZERO_TABLE := make([]byte, m)
+	for i := 0; i < n; i++ {
+		ZERO_TABLE[i] = 1
+	}
+	for i := n; i < m; i++ {
+		ZERO_TABLE[i] = 0
+	}
+	retv = make([][]int, 0)
+	next := true
+	for next {
+		one := make([]int, n)
+		index := 0
+		for i := 0; i < m; i++ {
+			if ZERO_TABLE[i] == 1 {
+				one[index] = i
+				index++
+			}
+		}
+		retv = append(retv, one)
+		next = false
+		for i := 0; i < m-1; i++ {
+			if ZERO_TABLE[i] == 1 && ZERO_TABLE[i+1] == 0 {
+				ZERO_TABLE[i], ZERO_TABLE[i+1] = 0, 1
+				count := 0
+				//获取i位置前的1的个数
+				for j := 0; j < i; j++ {
+					if ZERO_TABLE[j] == 1 {
+						count++
+					}
+				}
+				//将i位置左侧的1全移到最左侧
+				if count < i {
+					for j := 0; j < count; j++ {
+						ZERO_TABLE[j] = 1
+					}
+					for j := count; j < i; j++ {
+						ZERO_TABLE[j] = 0
+					}
+				}
+				next = true
+				break
+			}
+		}
+	}
+	return retv, len(retv)
+}
+
+//从m个数中选取n个数的组合个数
+func CombineCount(m, n int) (ret int) {
+	ret = 0
+	for i := m; i >= n; i-- {
+		if n > 1 {
+			ret += CombineCount(i-1, n-1)
+		} else {
+			ret++
+		}
+	}
+	return ret
+}
+
 func XorEncrypt(src []byte, key []byte) []byte {
 	ssize := len(src)
 	ret := make([]byte, ssize)
@@ -230,6 +291,15 @@ func StrToInt64(v string) int64 {
 		panic(err)
 	}
 	return n
+}
+
+func StrToInt32(v string) int32 {
+	var n int64
+	var err error
+	if n, err = strconv.ParseInt(v, 10, 32); err != nil {
+		panic(err)
+	}
+	return int32(n)
 }
 
 func Hex2Bytes(v string) []byte {
