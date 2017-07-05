@@ -25,7 +25,10 @@ import (
 	"time"
 )
 
-func CombineSplit2Index(m, n int) (retv [][]int, retn int) {
+func CombineSplit2Index(m, n int) (retv [][]int) {
+	if m < n {
+		return nil
+	}
 	ZERO_TABLE := make([]byte, m)
 	for i := 0; i < n; i++ {
 		ZERO_TABLE[i] = 1
@@ -70,7 +73,7 @@ func CombineSplit2Index(m, n int) (retv [][]int, retn int) {
 			}
 		}
 	}
-	return retv, len(retv)
+	return retv
 }
 
 //从m个数中选取n个数的组合个数
