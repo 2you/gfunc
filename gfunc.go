@@ -20,10 +20,35 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
 )
+
+func IntInSet(v int, s ...interface{}) bool {
+	for _, vv := range s {
+		if reflect.TypeOf(vv).Kind() != reflect.Int {
+			continue
+		}
+		if int(v) == vv.(int) {
+			return true
+		}
+	}
+	return false
+}
+
+func CharInSet(v byte, s ...interface{}) bool {
+	for _, vv := range s {
+		if reflect.TypeOf(vv).Kind() != reflect.Int32 { //字符型会被转换成int32
+			continue
+		}
+		if int32(v) == vv.(int32) {
+			return true
+		}
+	}
+	return false
+}
 
 func CombineSplit2Index(m, n int) (retv [][]int) {
 	if m < n {
