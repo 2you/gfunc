@@ -6,7 +6,7 @@ import (
 
 func Test_XorEncrypt(t *testing.T) {
 	str1 := "异或数据原文，字符串显示。\nGoGoGo"
-	key := "异或key数据"
+	key := "异或密钥"
 	buf1 := []byte(str1)
 	buf2 := XorEncrypt(buf1, []byte(key))
 	t.Logf("原数据\n------------------------------------\n%s\n------------------------------------\n", string(buf1))

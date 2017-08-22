@@ -117,10 +117,25 @@ func CombineCount(m, n int) (ret int) {
 func XorEncrypt(src []byte, key []byte) []byte {
 	ssize := len(src)
 	ret := make([]byte, ssize)
+	cuurkey := make([]byte, 0)
+	//去除key里的重复字符
+	for _, v1 := range key {
+		bcontain := false
+		for _, v2 := range cuurkey {
+			if v1 == v2 {
+				bcontain = true
+				break
+			}
+		}
+
+		if !bcontain {
+			cuurkey = append(cuurkey, v1)
+		}
+	}
 	copy(ret, src)
-	for i := 0; i < len(key); i++ {
+	for i := 0; i < len(cuurkey); i++ {
 		for j := 0; j < ssize; j++ {
-			ret[j] = ret[j] ^ key[i]
+			ret[j] = ret[j] ^ cuurkey[i]
 		}
 	}
 	return ret
