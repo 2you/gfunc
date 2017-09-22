@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -202,6 +203,21 @@ func HttpDataSizeGet(geturl string, headers map[string]string, params map[string
 	return ret
 }
 
+func checkRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= 5 {
+		return errors.New("stopped after 5 redirects")
+	}
+
+	resp := req.Response
+	if resp != nil {
+		//log.Println(resp.Header)
+		cookie := resp.Header.Get("Set-Cookie")
+		//log.Println(cookie)
+		req.Header.Set("Cookie", cookie)
+	}
+	return nil
+}
+
 func HttpGet(geturl string, headers map[string]string, params map[string]string) []byte {
 	var body io.Reader = nil
 	if params != nil {
@@ -215,24 +231,33 @@ func HttpGet(geturl string, headers map[string]string, params map[string]string)
 		}
 		body = ioutil.NopCloser(strings.NewReader(str)) //把form数据编下码
 	}
-	httpClient := &http.Client{}
+
 	httpReq, _ := http.NewRequest("GET", geturl, body)
 	for k, v := range headers {
 		httpReq.Header.Set(k, v)
 	}
-
+	httpClient := &http.Client{}
+	httpClient.CheckRedirect = checkRedirect
 	httpResp, err := httpClient.Do(httpReq)
-	defer httpResp.Body.Close()
+	if httpResp != nil {
+		defer httpResp.Body.Close()
+	}
+
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err)
 		return nil
 	}
+
 	if httpResp.StatusCode != 200 && httpResp.StatusCode != 206 {
-		fmt.Println(`response status code is`, httpResp.StatusCode)
+		log.Println(`response status code is`, httpResp.StatusCode)
 		return nil
 	}
-	//	fmt.Println(httpResp.Header)
-	data, _ := ioutil.ReadAll(httpResp.Body)
+
+	data, err := ioutil.ReadAll(httpResp.Body)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
 	return data
 }
 
