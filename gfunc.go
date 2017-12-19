@@ -313,6 +313,24 @@ func StrToFloat64(v string) float64 {
 	return f
 }
 
+func StrToFloat32Def(v string, d float32) float32 {
+	var f float64
+	var err error
+	if f, err = strconv.ParseFloat(v, 64); err != nil {
+		return d
+	}
+	return float32(f)
+}
+
+func StrToFloat32(v string) float32 {
+	var f float64
+	var err error
+	if f, err = strconv.ParseFloat(v, 32); err != nil {
+		panic(err)
+	}
+	return float32(f)
+}
+
 func Float64ToStr(v float64) string {
 	return strconv.FormatFloat(v, 'f', -1, 64)
 }
