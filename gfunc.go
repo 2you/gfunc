@@ -27,6 +27,23 @@ import (
 	"time"
 )
 
+func BytesMerge(v ...[]byte) []byte {
+	if len(v) == 0 {
+		return nil
+	}
+	vl := len(v)
+	size := len(v[0])
+	for i := 1; i < vl; i++ {
+		size += len(v[i])
+	}
+	ret := make([]byte, size)
+	idx := copy(ret, v[0])
+	for i := 1; i < vl; i++ {
+		idx += copy(ret[idx:], v[i])
+	}
+	return ret
+}
+
 func IntInSet(v int, s ...interface{}) bool {
 	for _, vv := range s {
 		if reflect.TypeOf(vv).Kind() != reflect.Int {
