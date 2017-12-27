@@ -27,21 +27,27 @@ import (
 	"time"
 )
 
-func BytesMerge(v ...[]byte) []byte {
+func BytesMerge(v ...*[]byte) *[]byte {
 	if len(v) == 0 {
 		return nil
 	}
 	vl := len(v)
-	size := len(v[0])
-	for i := 1; i < vl; i++ {
-		size += len(v[i])
+	size := 0
+	for i := 0; i < vl; i++ {
+		if v[i] == nil {
+			continue
+		}
+		size += len(*v[i])
 	}
 	ret := make([]byte, size)
-	idx := copy(ret, v[0])
-	for i := 1; i < vl; i++ {
-		idx += copy(ret[idx:], v[i])
+	idx := 0
+	for i := 0; i < vl; i++ {
+		if v[i] == nil {
+			continue
+		}
+		idx += copy(ret[idx:], *v[i])
 	}
-	return ret
+	return &ret
 }
 
 func IntInSet(v int, s ...interface{}) bool {
