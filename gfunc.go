@@ -423,12 +423,13 @@ func StrToInt64(v string) int64 {
 }
 
 func StrToInt32(v string) int32 {
-	var n int64
-	var err error
-	if n, err = strconv.ParseInt(v, 10, 32); err != nil {
-		panic(err)
-	}
-	return int32(n)
+	r := StrToInt64(v)
+	return int32(r)
+}
+
+func StrToInt(v string) int {
+	r := StrToInt64(v)
+	return int(r)
 }
 
 func Hex2Bytes(v string) []byte {
@@ -549,7 +550,7 @@ func AES_CBC_Decrypt(data []byte, keysize int, key, iv []byte) (ret []byte, err 
 	ret = make([]byte, len(data))
 	blockmode := cipher.NewCBCDecrypter(cipherblock, iv)
 	blockmode.CryptBlocks(ret, data)
-	ret = PKCS5UnPadding(ret)
+	ret = PKCS7UnPadding(ret)
 	return ret, nil
 }
 
@@ -567,7 +568,7 @@ func AES_CBC_Encrypt(data []byte, keysize int, key, iv []byte) (ret []byte, err 
 	if cipherblock, err = aes.NewCipher(key); err != nil {
 		return nil, err
 	}
-	data = PKCS5Padding(data, cipherblock.BlockSize())
+	data = PKCS7Padding(data, cipherblock.BlockSize())
 	ret = make([]byte, len(data))
 	blockmode := cipher.NewCBCEncrypter(cipherblock, iv)
 	blockmode.CryptBlocks(ret, data)
@@ -590,16 +591,27 @@ func aes_param_check(data []byte, keysize int, key, iv []byte) error {
 	return nil
 }
 
-func PKCS5UnPadding(data []byte) []byte {
+func PKCS7UnPadding(data []byte) []byte {
 	length := len(data)
 	unpadding := int(data[length-1])
 	return data[:(length - unpadding)]
 }
 
-func PKCS5Padding(ciphertext []byte, blockSize int) []byte {
+func PKCS7Padding(ciphertext []byte, blockSize int) []byte {
+	if blockSize < 1 || blockSize > 255 {
+		panic("block size must be 1~255")
+	}
 	padding := blockSize - len(ciphertext)%blockSize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(ciphertext, padtext...)
+}
+
+func PKCS5Padding(ciphertext []byte) []byte {
+	return PKCS7Padding(ciphertext, 8)
+}
+
+func PKCS5UnPadding(data []byte) []byte {
+	return PKCS7UnPadding(data)
 }
 
 //将当前系统的时间转为字符串 精确到微秒
