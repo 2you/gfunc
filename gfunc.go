@@ -334,7 +334,11 @@ func HttpPost(posturl string, headers map[string]string, params map[string]strin
 		fmt.Println(`response status code is`, httpResp.StatusCode)
 		return nil
 	}
-	data, _ := ioutil.ReadAll(httpResp.Body)
+	data, err := ioutil.ReadAll(httpResp.Body)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
 	return data
 }
 
