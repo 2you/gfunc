@@ -431,9 +431,17 @@ func StrToInt32(v string) int32 {
 	return int32(r)
 }
 
+func StrToInt32Def(v string, d int32) int32 {
+	return int32(StrToInt64Def(v, int64(d)))
+}
+
 func StrToInt(v string) int {
 	r := StrToInt64(v)
 	return int(r)
+}
+
+func StrToIntDef(v string, d int) int {
+	return int(StrToInt64Def(v, int64(d)))
 }
 
 func Hex2Bytes(v string) []byte {
