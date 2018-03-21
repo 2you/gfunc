@@ -499,6 +499,12 @@ func ZBase64Decompress(v string) []byte {
 	return ZlibDecompress(z)
 }
 
+func ZBase64DecompressA(v string) (r []byte, e error) {
+	z := Base64Decode(v)
+	r, e = ZlibDecompressA(z)
+	return r, e
+}
+
 //先zlib压缩再base64加密
 func ZBase64Compress(v []byte) string {
 	z := ZlibCompress(v)
@@ -506,15 +512,24 @@ func ZBase64Compress(v []byte) string {
 }
 
 func ZlibDecompress(v []byte) []byte {
+	r, e := ZlibDecompressA(v)
+	if e != nil {
+		log.Println(e.Error())
+	}
+	return r
+}
+
+func ZlibDecompressA(v []byte) (retr []byte, rete error) {
 	b := bytes.NewReader(v)
 	var out bytes.Buffer
+	retr = nil
 	if r, e := zlib.NewReader(b); e != nil {
-		fmt.Println(`[ZlibDecompress]`, e.Error())
-		return []byte(``)
+		rete = e
 	} else {
 		io.Copy(&out, r)
-		return out.Bytes()
+		retr = out.Bytes()
 	}
+	return retr, rete
 }
 
 func ZlibCompress(v []byte) []byte {
