@@ -190,13 +190,19 @@ func DelphiTrim(v string) (ret string) {
 	return ret
 }
 
-func UnGZIP(v []byte) (ret []byte) {
+func UnGZip(v []byte) (r []byte, e error)  {
 	var b bytes.Buffer
 	b.Write(v)
-	r, _ := gzip.NewReader(&b)
-	defer r.Close()
-	ret, _ = ioutil.ReadAll(r)
-	// fmt.Println("ungzip size:", len(ret))
+	rd, er := gzip.NewReader(&b)
+	if er != nil {
+		return nil, er
+	}
+	defer rd.Close()
+	return ioutil.ReadAll(rd)
+}
+
+func UnGZIP(v []byte) (ret []byte) {
+	ret, _ = UnGZip(v)
 	return ret
 }
 
