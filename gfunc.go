@@ -25,7 +25,32 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/2you/gfunc/mahonia"
 )
+
+func Utf8ToAnsi(src string) string {
+	return ConvertCharacterSet(src, "UTF-8", "ASCII")
+}
+
+func AnsiToUtf8(src string) string {
+	return ConvertCharacterSet(src, "ASCII", "UTF-8")
+}
+
+func Utf8ToGbk(v string) string {
+	return ConvertCharacterSet(v, "UTF-8", "GBK")
+}
+
+func GbkToUtf8(v string) string {
+	return ConvertCharacterSet(v, "GBK", "UTF-8")
+}
+
+func ConvertCharacterSet(srcData, srcCharacterSet, dstCharacterSet string) string {
+	srcCoder := mahonia.NewDecoder(srcCharacterSet)
+	srcResult := srcCoder.ConvertString(srcData)
+	tagCoder := mahonia.NewEncoder(dstCharacterSet)
+	return tagCoder.ConvertString(srcResult)
+}
 
 func BytesMergeA(v ...*[]byte) *[]byte {
 	if len(v) == 0 {
@@ -190,7 +215,7 @@ func DelphiTrim(v string) (ret string) {
 	return ret
 }
 
-func UnGZip(v []byte) (r []byte, e error)  {
+func UnGZip(v []byte) (r []byte, e error) {
 	var b bytes.Buffer
 	b.Write(v)
 	rd, er := gzip.NewReader(&b)
