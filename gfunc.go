@@ -251,11 +251,11 @@ func HttpDataSizeGet(geturl string, headers map[string]string, params map[string
 	}
 
 	httpResp, err := httpClient.Do(httpReq)
-	defer httpResp.Body.Close()
 	if err != nil {
 		fmt.Println(err.Error())
 		return 0
 	}
+	defer httpResp.Body.Close()
 	if httpResp.StatusCode != 206 {
 		fmt.Println(`response status code is`, httpResp.StatusCode)
 		return 0
@@ -350,12 +350,11 @@ func HttpPost(posturl string, headers map[string]string, params map[string]strin
 		httpReq.Header.Set(k, v)
 	}
 	httpResp, err := httpClient.Do(httpReq)
-	defer httpResp.Body.Close()
 	if err != nil {
 		fmt.Println(err.Error())
 		return nil
 	}
-
+	defer httpResp.Body.Close()
 	if httpResp.StatusCode != 200 && httpResp.StatusCode != 206 {
 		fmt.Println(`response status code is`, httpResp.StatusCode)
 		return nil
@@ -713,12 +712,11 @@ func CurrTime2Str_Mill() string {
 
 //将当前系统的时间转为字符串 精确到秒
 func CurrTime2Str_Sec() string {
-    currTime := time.Now()
-    hour, min, sec := currTime.Clock()
-    sNow := fmt.Sprintf("%0.2d:%0.2d:%0.2d", hour, min, sec)
-    return sNow
+	currTime := time.Now()
+	hour, min, sec := currTime.Clock()
+	sNow := fmt.Sprintf("%0.2d:%0.2d:%0.2d", hour, min, sec)
+	return sNow
 }
-
 
 //将当前系统的日期转为字符串
 func CurrDate2Str() string {
@@ -737,44 +735,47 @@ func YestodayDate2Str() string {
 	return sNow
 }
 
-//将当前系统的日期时间转为字符串 精确到微秒
-func CurrDateTime2Str_Micro() string {
-    currTime := time.Now()
-    year, month, day := currTime.Date()
-    hour, min, sec := currTime.Clock()
-    microSec := currTime.UTC().Nanosecond() / 1000
-    sNow := fmt.Sprintf("%0.4d-%0.2d-%0.2d %0.2d:%0.2d:%0.2d.%0.6d",
-        year, month, day, hour, min, sec, microSec)
-    return sNow
+func DateTime2Str_Sec(t time.Time) string {
+	return t.Format("2006-01-02 15:04:05")
 }
 
-//将当前系统的日期时间转为字符串 精确到毫秒
-func CurrDateTime2Str_Mill() string {
-    currTime := time.Now()
-    year, month, day := currTime.Date()
-    hour, min, sec := currTime.Clock()
-    millSec := currTime.UTC().Nanosecond() / 1000 / 1000
-    sNow := fmt.Sprintf("%0.4d-%0.2d-%0.2d %0.2d:%0.2d:%0.2d.%0.3d",
-        year, month, day, hour, min, sec, millSec)
-    return sNow
+func DateTime2Str_Mill(t time.Time) string {
+	year, month, day := t.Date()
+	hour, min, sec := t.Clock()
+	millSec := t.UTC().Nanosecond() / 1000 / 1000
+	return fmt.Sprintf("%0.4d-%0.2d-%0.2d %0.2d:%0.2d:%0.2d.%0.3d",
+		year, month, day, hour, min, sec, millSec)
+}
+
+func DateTime2Str_Micro(t time.Time) string {
+	year, month, day := t.Date()
+	hour, min, sec := t.Clock()
+	microSec := t.UTC().Nanosecond() / 1000
+	return fmt.Sprintf("%0.4d-%0.2d-%0.2d %0.2d:%0.2d:%0.2d.%0.6d",
+		year, month, day, hour, min, sec, microSec)
 }
 
 //将当前系统的日期时间转为字符串 精确到秒
 func CurrDateTime2Str_Sec() string {
-    currTime := time.Now()
-    year, month, day := currTime.Date()
-    hour, min, sec := currTime.Clock()
-    sNow := fmt.Sprintf("%0.4d-%0.2d-%0.2d %0.2d:%0.2d:%0.2d",
-        year, month, day, hour, min, sec)
-    return sNow
+	return DateTime2Str_Sec(time.Now())
+}
+
+//将当前系统的日期时间转为字符串 精确到毫秒
+func CurrDateTime2Str_Mill() string {
+	return DateTime2Str_Mill(time.Now())
+}
+
+//将当前系统的日期时间转为字符串 精确到微秒
+func CurrDateTime2Str_Micro() string {
+	return DateTime2Str_Micro(time.Now())
 }
 
 func CurrUnixTime() int64 {
-    return time.Now().Unix()
+	return time.Now().Unix()
 }
 
 func CurrUnixNanoTime() int64 {
-    return time.Now().UnixNano()
+	return time.Now().UnixNano()
 }
 
 func StrToDateTime(v string, location *time.Location) time.Time {
