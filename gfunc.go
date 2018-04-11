@@ -242,7 +242,7 @@ func HttpDataSizeGet(geturl string, headers map[string]string, params map[string
 		for k, v := range params {
 			urlValues.Set(k, v)
 		}
-		body = ioutil.NopCloser(strings.NewReader(urlValues.Encode())) //把form数据编下码
+		body = ioutil.NopCloser(strings.NewReader(urlValues.Encode()))
 	}
 	httpClient := &http.Client{}
 	httpReq, _ := http.NewRequest("GET", geturl, body)
@@ -261,20 +261,16 @@ func HttpDataSizeGet(geturl string, headers map[string]string, params map[string
 		return 0
 	}
 	crangemap := httpResp.Header["Content-Range"]
-	//	fmt.Println(contentrange)
 	if len(crangemap) < 1 {
 		fmt.Println("headers key Content-Range is null")
 	}
 	contentrange := crangemap[0]
 	index := strings.Index(contentrange, "/")
-	//	fmt.Println(index)
 	if index < 1 {
 		fmt.Println("headers key Content-Range value is", crangemap)
 	}
 	length := contentrange[index+1:]
-	//	fmt.Println(length)
-	ret, _ := strconv.ParseUint(length, 10, 64)
-	return ret
+	return StrToUInt64Def(length, 0)
 }
 
 func checkRedirect(req *http.Request, via []*http.Request) error {
@@ -303,7 +299,7 @@ func HttpGet(geturl string, headers map[string]string, params map[string]string)
 		if strings.Index(str, "=") == 0 {
 			str = str[1:]
 		}
-		body = ioutil.NopCloser(strings.NewReader(str)) //把form数据编下码
+		body = ioutil.NopCloser(strings.NewReader(str))
 	}
 
 	httpReq, _ := http.NewRequest("GET", geturl, body)
@@ -326,7 +322,6 @@ func HttpGet(geturl string, headers map[string]string, params map[string]string)
 		log.Println(`response status code is`, httpResp.StatusCode)
 		return nil
 	}
-
 	data, err := ioutil.ReadAll(httpResp.Body)
 	if err != nil {
 		log.Println(err)
@@ -346,7 +341,7 @@ func HttpPost(posturl string, headers map[string]string, params map[string]strin
 		if strings.Index(str, "=") == 0 {
 			str = str[1:]
 		}
-		body = ioutil.NopCloser(strings.NewReader(str)) //把form数据编下码
+		body = ioutil.NopCloser(strings.NewReader(str))
 	}
 	httpClient := &http.Client{}
 	httpReq, _ := http.NewRequest("POST", posturl, body)
@@ -354,13 +349,13 @@ func HttpPost(posturl string, headers map[string]string, params map[string]strin
 	for k, v := range headers {
 		httpReq.Header.Set(k, v)
 	}
-	//	fmt.Printf("%+v\n", httpReq) //看下发送的结构
-	httpResp, err := httpClient.Do(httpReq) //发送
-	defer httpResp.Body.Close()             //一定要关闭resp.Body
+	httpResp, err := httpClient.Do(httpReq)
+	defer httpResp.Body.Close()
 	if err != nil {
 		fmt.Println(err.Error())
 		return nil
 	}
+
 	if httpResp.StatusCode != 200 && httpResp.StatusCode != 206 {
 		fmt.Println(`response status code is`, httpResp.StatusCode)
 		return nil
@@ -371,6 +366,32 @@ func HttpPost(posturl string, headers map[string]string, params map[string]strin
 		return nil
 	}
 	return data
+}
+
+func IntAbs(v int) int {
+	return int(Int64Abs(int64(v)))
+}
+
+func Int32Abs(v int32) int32 {
+	return int32(Int64Abs(int64(v)))
+}
+
+func Int64Abs(v int64) int64 {
+	if v < 0 {
+		return -v
+	}
+	return v
+}
+
+func Float32Abs(v float32) float32 {
+	return float32(Float64Abs(float64(v)))
+}
+
+func Float64Abs(v float64) float64 {
+	if v < 0 {
+		return -v
+	}
+	return v
 }
 
 func StrToFloat64Def(v string, d float64) float64 {
