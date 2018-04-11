@@ -673,13 +673,31 @@ func PKCS5UnPadding(data []byte) []byte {
 }
 
 //将当前系统的时间转为字符串 精确到微秒
-func CurrTime2Str() string {
+func CurrTime2Str_Micro() string {
 	currTime := time.Now()
 	hour, min, sec := currTime.Clock()
 	microSec := currTime.UTC().Nanosecond() / 1000
 	sNow := fmt.Sprintf("%0.2d:%0.2d:%0.2d.%0.6d", hour, min, sec, microSec)
 	return sNow
 }
+
+//将当前系统的时间转为字符串 精确到毫秒
+func CurrTime2Str_Mill() string {
+	currTime := time.Now()
+	hour, min, sec := currTime.Clock()
+	millSec := currTime.UTC().Nanosecond() / 1000 / 1000
+	sNow := fmt.Sprintf("%0.2d:%0.2d:%0.2d.%0.3d", hour, min, sec, millSec)
+	return sNow
+}
+
+//将当前系统的时间转为字符串 精确到秒
+func CurrTime2Str_Sec() string {
+    currTime := time.Now()
+    hour, min, sec := currTime.Clock()
+    sNow := fmt.Sprintf("%0.2d:%0.2d:%0.2d", hour, min, sec)
+    return sNow
+}
+
 
 //将当前系统的日期转为字符串
 func CurrDate2Str() string {
@@ -699,18 +717,43 @@ func YestodayDate2Str() string {
 }
 
 //将当前系统的日期时间转为字符串 精确到微秒
-func CurrDateTime2Str() string {
-	currTime := time.Now()
-	year, month, day := currTime.Date()
-	hour, min, sec := currTime.Clock()
-	microSec := currTime.UTC().Nanosecond() / 1000
-	sNow := fmt.Sprintf("%0.4d-%0.2d-%0.2d %0.2d:%0.2d:%0.2d.%0.6d",
-		year, month, day, hour, min, sec, microSec)
-	return sNow
+func CurrDateTime2Str_Micro() string {
+    currTime := time.Now()
+    year, month, day := currTime.Date()
+    hour, min, sec := currTime.Clock()
+    microSec := currTime.UTC().Nanosecond() / 1000
+    sNow := fmt.Sprintf("%0.4d-%0.2d-%0.2d %0.2d:%0.2d:%0.2d.%0.6d",
+        year, month, day, hour, min, sec, microSec)
+    return sNow
+}
+
+//将当前系统的日期时间转为字符串 精确到毫秒
+func CurrDateTime2Str_Mill() string {
+    currTime := time.Now()
+    year, month, day := currTime.Date()
+    hour, min, sec := currTime.Clock()
+    millSec := currTime.UTC().Nanosecond() / 1000 / 1000
+    sNow := fmt.Sprintf("%0.4d-%0.2d-%0.2d %0.2d:%0.2d:%0.2d.%0.3d",
+        year, month, day, hour, min, sec, millSec)
+    return sNow
+}
+
+//将当前系统的日期时间转为字符串 精确到秒
+func CurrDateTime2Str_Sec() string {
+    currTime := time.Now()
+    year, month, day := currTime.Date()
+    hour, min, sec := currTime.Clock()
+    sNow := fmt.Sprintf("%0.4d-%0.2d-%0.2d %0.2d:%0.2d:%0.2d",
+        year, month, day, hour, min, sec)
+    return sNow
 }
 
 func CurrUnixTime() int64 {
-	return time.Now().Unix()
+    return time.Now().Unix()
+}
+
+func CurrUnixNanoTime() int64 {
+    return time.Now().UnixNano()
 }
 
 func StrToDateTime(v string, location *time.Location) time.Time {
