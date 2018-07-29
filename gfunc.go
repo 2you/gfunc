@@ -778,6 +778,14 @@ func CurrUnixNanoTime() int64 {
 	return time.Now().UnixNano()
 }
 
+func ParseStrDateTimeInLocation(str string, location *time.Location) (time.Time, error)  {
+    return time.ParseInLocation("2006-01-02 15:04:05", str, location)
+}
+
+func ParseStrDateTime(str string) (time.Time, error)  {
+    return ParseStrDateTimeInLocation(str, time.Local)
+}
+
 func StrToDateTime(v string, location *time.Location) time.Time {
 	tm, _ := time.ParseInLocation("2006-01-02 15:04:05", v, location)
 	return tm
