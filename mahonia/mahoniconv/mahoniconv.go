@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/2you/gfunc/mahonia"
 	"flag"
 	"io"
 	"log"
 	"os"
+
+	"github.com/2you/gfunc/mahonia"
 )
 
 // An iconv workalike using mahonia.
