@@ -76,7 +76,7 @@ func Test_AES_CBC_Base64_Encrypt(t *testing.T) {
 }
 
 func Test_CurrTime2Str(t *testing.T) {
-	time := CurrTime2Str()
+	time := CurrTime2Str_Sec()
 	t.Log(time)
 }
 
@@ -91,7 +91,7 @@ func Test_YestodayDate2Str(t *testing.T) {
 }
 
 func Test_CurrDateTime2Str(t *testing.T) {
-	dt := CurrDateTime2Str()
+	dt := CurrDateTime2Str_Sec()
 	t.Log(dt)
 }
 

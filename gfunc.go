@@ -210,7 +210,7 @@ func XorEncrypt(src []byte, key []byte) []byte {
 	return ret
 }
 
-func DelphiTrim(v string) (ret string) {
+func StringTrim(v string) (ret string) {
 	ret = strings.Trim(v, "\r\n\t ")
 	return ret
 }
