@@ -319,7 +319,7 @@ func HttpGet(geturl string, headers map[string]string, params map[string]string)
 	}
 
 	if httpResp.StatusCode != 200 && httpResp.StatusCode != 206 {
-		log.Println(`response status code is`, httpResp.StatusCode)
+		// log.Println(`response status code is`, httpResp.StatusCode)
 		return nil
 	}
 	data, err := ioutil.ReadAll(httpResp.Body)
@@ -351,12 +351,12 @@ func HttpPost(posturl string, headers map[string]string, params map[string]strin
 	}
 	httpResp, err := httpClient.Do(httpReq)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return nil
 	}
 	defer httpResp.Body.Close()
 	if httpResp.StatusCode != 200 && httpResp.StatusCode != 206 {
-		fmt.Println(`response status code is`, httpResp.StatusCode)
+		// log.Println(`response status code is`, httpResp.StatusCode)
 		return nil
 	}
 	data, err := ioutil.ReadAll(httpResp.Body)
