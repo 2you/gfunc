@@ -78,8 +78,8 @@ func Test_SearchFiles(t *testing.T) {
 	}
 }
 
-func Test_ExtractFileDir(t *testing.T) {
-	s := ExtractFileDir(AppFileName())
+func Test_ExtractFilePath(t *testing.T) {
+	s := ExtractFilePath(AppFileName())
 	t.Log(s)
 }
 
@@ -90,5 +90,10 @@ func Test_ExtractFileName(t *testing.T) {
 
 func Test_ExtractFileExt(t *testing.T) {
 	s := ExtractFileExt(AppFileName())
+	t.Log(s)
+}
+
+func Test_ExtractFileDir(t *testing.T) {
+	s := ExtractFileDir(AppFileName())
 	t.Log(s)
 }

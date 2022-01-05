@@ -181,7 +181,7 @@ func SearchFiles(dirPath string, suffixs []string, containSubDir bool) (filename
 	return filenames, nil
 }
 
-func ExtractFileDir(filename string) (ret string) {
+func ExtractFilePath(filename string) (ret string) {
 	ret, _ = filepath.Split(filename)
 	return ret
 }
@@ -194,4 +194,12 @@ func ExtractFileName(filename string) (ret string) {
 func ExtractFileExt(filename string) (ret string) {
 	ret = filepath.Ext(filename)
 	return ret
+}
+
+func ExtractFileDir(filename string) (ret string) {
+	ret = ExtractFilePath(filename)
+	if ret == `` || ret[len(ret)-1] != os.PathSeparator {
+		return ret
+	}
+	return ret[:len(ret)-1]
 }
