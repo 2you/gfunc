@@ -13,20 +13,15 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/2you/gfunc/mahonia"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
-
-	"github.com/2you/gfunc/mahonia"
 )
 
 func Utf8ToAnsi(src string) string {
@@ -210,11 +205,6 @@ func XorEncrypt(src []byte, key []byte) []byte {
 	return ret
 }
 
-func StringTrim(v string) (ret string) {
-	ret = strings.Trim(v, "\r\n\t ")
-	return ret
-}
-
 func UnGZip(v []byte) (r []byte, e error) {
 	var b bytes.Buffer
 	b.Write(v)
@@ -222,7 +212,9 @@ func UnGZip(v []byte) (r []byte, e error) {
 	if er != nil {
 		return nil, er
 	}
-	defer rd.Close()
+	defer func() {
+		_ = rd.Close()
+	}()
 	return ioutil.ReadAll(rd)
 }
 
@@ -255,7 +247,9 @@ func HttpDataSizeGet(geturl string, headers map[string]string, params map[string
 		fmt.Println(err.Error())
 		return 0
 	}
-	defer httpResp.Body.Close()
+	defer func() {
+		_ = httpResp.Body.Close()
+	}()
 	if httpResp.StatusCode != 206 {
 		fmt.Println(`response status code is`, httpResp.StatusCode)
 		return 0
@@ -310,7 +304,9 @@ func HttpGet(geturl string, headers map[string]string, params map[string]string)
 	httpClient.CheckRedirect = checkRedirect
 	httpResp, err := httpClient.Do(httpReq)
 	if httpResp != nil {
-		defer httpResp.Body.Close()
+		defer func(Body io.ReadCloser) {
+			_ = Body.Close()
+		}(httpResp.Body)
 	}
 
 	if err != nil {
@@ -354,7 +350,9 @@ func HttpPost(posturl string, headers map[string]string, params map[string]strin
 		log.Println(err.Error())
 		return nil
 	}
-	defer httpResp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(httpResp.Body)
 	if httpResp.StatusCode != 200 && httpResp.StatusCode != 206 {
 		// log.Println(`response status code is`, httpResp.StatusCode)
 		return nil
@@ -577,7 +575,7 @@ func ZlibDecompressA(v []byte) (retr []byte, rete error) {
 	if r, e := zlib.NewReader(b); e != nil {
 		rete = e
 	} else {
-		io.Copy(&out, r)
+		_, _ = io.Copy(&out, r)
 		retr = out.Bytes()
 	}
 	return retr, rete
@@ -586,8 +584,8 @@ func ZlibDecompressA(v []byte) (retr []byte, rete error) {
 func ZlibCompress(v []byte) []byte {
 	var in bytes.Buffer
 	w := zlib.NewWriter(&in)
-	w.Write(v)
-	w.Close()
+	_, _ = w.Write(v)
+	_ = w.Close()
 	return in.Bytes()
 }
 
@@ -690,216 +688,4 @@ func PKCS5Padding(ciphertext []byte) []byte {
 
 func PKCS5UnPadding(data []byte) []byte {
 	return PKCS7UnPadding(data)
-}
-
-//将当前系统的时间转为字符串 精确到微秒
-func CurrTime2Str_Micro() string {
-	currTime := time.Now()
-	hour, min, sec := currTime.Clock()
-	microSec := currTime.UTC().Nanosecond() / 1000
-	sNow := fmt.Sprintf("%0.2d:%0.2d:%0.2d.%0.6d", hour, min, sec, microSec)
-	return sNow
-}
-
-//将当前系统的时间转为字符串 精确到毫秒
-func CurrTime2Str_Mill() string {
-	currTime := time.Now()
-	hour, min, sec := currTime.Clock()
-	millSec := currTime.UTC().Nanosecond() / 1000 / 1000
-	sNow := fmt.Sprintf("%0.2d:%0.2d:%0.2d.%0.3d", hour, min, sec, millSec)
-	return sNow
-}
-
-//将当前系统的时间转为字符串 精确到秒
-func CurrTime2Str_Sec() string {
-	currTime := time.Now()
-	hour, min, sec := currTime.Clock()
-	sNow := fmt.Sprintf("%0.2d:%0.2d:%0.2d", hour, min, sec)
-	return sNow
-}
-
-//将当前系统的日期转为字符串
-func CurrDate2Str() string {
-	currTime := time.Now()
-	year, month, day := currTime.Date()
-	sNow := fmt.Sprintf("%0.4d-%0.2d-%0.2d", year, month, day)
-	return sNow
-}
-
-//将昨天的日期转化为字符串
-func YestodayDate2Str() string {
-	currTime := time.Now()
-	yestodayTime := currTime.AddDate(0, 0, -1)
-	year, month, day := yestodayTime.Date()
-	sNow := fmt.Sprintf("%0.4d-%0.2d-%0.2d", year, month, day)
-	return sNow
-}
-
-func DateTime2Str_Sec(t time.Time) string {
-	return t.Format("2006-01-02 15:04:05")
-}
-
-func DateTime2Str_Mill(t time.Time) string {
-	year, month, day := t.Date()
-	hour, min, sec := t.Clock()
-	millSec := t.UTC().Nanosecond() / 1000 / 1000
-	return fmt.Sprintf("%0.4d-%0.2d-%0.2d %0.2d:%0.2d:%0.2d.%0.3d",
-		year, month, day, hour, min, sec, millSec)
-}
-
-func DateTime2Str_Micro(t time.Time) string {
-	year, month, day := t.Date()
-	hour, min, sec := t.Clock()
-	microSec := t.UTC().Nanosecond() / 1000
-	return fmt.Sprintf("%0.4d-%0.2d-%0.2d %0.2d:%0.2d:%0.2d.%0.6d",
-		year, month, day, hour, min, sec, microSec)
-}
-
-//将当前系统的日期时间转为字符串 精确到秒
-func CurrDateTime2Str_Sec() string {
-	return DateTime2Str_Sec(time.Now())
-}
-
-//将当前系统的日期时间转为字符串 精确到毫秒
-func CurrDateTime2Str_Mill() string {
-	return DateTime2Str_Mill(time.Now())
-}
-
-//将当前系统的日期时间转为字符串 精确到微秒
-func CurrDateTime2Str_Micro() string {
-	return DateTime2Str_Micro(time.Now())
-}
-
-func CurrUnixTime() int64 {
-	return time.Now().Unix()
-}
-
-func CurrUnixNanoTime() int64 {
-	return time.Now().UnixNano()
-}
-
-func ParseStrDateTimeInLocation(str string, location *time.Location) (time.Time, error) {
-	return time.ParseInLocation("2006-01-02 15:04:05", str, location)
-}
-
-func ParseStrDateTime(str string) (time.Time, error) {
-	return ParseStrDateTimeInLocation(str, time.Local)
-}
-
-func StrToDateTime(v string, location *time.Location) time.Time {
-	tm, _ := time.ParseInLocation("2006-01-02 15:04:05", v, location)
-	return tm
-}
-
-func Str2DateTime(v string) time.Time {
-	return StrToDateTime(v, time.Local)
-}
-
-func Str2LocalDateTime(v string) time.Time {
-	return StrToDateTime(v, time.Local)
-}
-
-func Str2UtcDateTime(v string) time.Time {
-	loc, _ := time.LoadLocation("UTC")
-	return StrToDateTime(v, loc)
-}
-
-//创建文件夹 文件夹存在或创建成功返回true 否则返回false
-func ForceDirectories(v string) bool {
-	if DirExist(v) {
-		return true
-	}
-	if err := os.MkdirAll(v, 777); err != nil {
-		return false
-	}
-	return true
-}
-
-//判断文件夹是否存在
-func DirExist(v string) bool {
-	fileinfo, err := os.Stat(v)
-	if err != nil {
-		return false
-	} else {
-		if !fileinfo.IsDir() {
-			return false
-		}
-		return true
-	}
-}
-
-//判断文件是否存在
-func FileExist(v string) bool {
-	fileinfo, err := os.Stat(v)
-	if err != nil {
-		return false
-	} else {
-		if fileinfo.IsDir() {
-			return false
-		}
-		return true
-	}
-}
-
-//将byte数据转为string 若byte数据中存在0x0 则只取0x0前的数据
-func Bytes2String(v []byte) string {
-	nIndex := bytes.IndexByte(v, 0x0)
-	if nIndex < 0 {
-		return string(v)
-	}
-	return string(v[:nIndex])
-}
-
-//获取当前运行程序所在的路径
-func AppFilePath() string {
-	var sFileName string
-	var err error
-	if sFileName, err = exec.LookPath(os.Args[0]); err != nil {
-		fmt.Fprintf(os.Stderr, "%s", err.Error())
-		return ``
-	}
-	if sFileName, err = filepath.Abs(sFileName); err != nil {
-		fmt.Fprintf(os.Stderr, "%s", err.Error())
-		return ``
-	}
-	sRet, _ := filepath.Split(sFileName)
-	return sRet
-}
-
-//获取文件内容
-func GetFileContent(filename string) ([]byte, error) {
-	fptr, err := os.Open(filename)
-	defer fptr.Close()
-	if err != nil {
-		return nil, err
-	}
-	data, err := ioutil.ReadAll(fptr)
-	return data, err
-}
-
-//获取文件的大小(单位是字节)
-func GetFileSize(filename string) int64 {
-	fileinfo, err := os.Stat(filename)
-	if err != nil && !os.IsExist(err) {
-		return 0
-	}
-	return fileinfo.Size()
-}
-
-func AppendStr2File(filename string, content string) error {
-	return AppendBytes2File(filename, []byte(content))
-}
-
-func AppendBytes2File(filename string, content []byte) error {
-	file, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0660)
-	if err != nil {
-		return err
-	}
-	_, err = file.Write(content)
-	file.Close()
-	return err
-}
-
-func FileRename(srcname, dstname string) error {
-	return os.Rename(srcname, dstname)
 }
