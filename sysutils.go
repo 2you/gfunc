@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"syscall"
 )
@@ -121,10 +120,6 @@ func WriteBytes2File(filename string, content []byte) error {
 }
 
 func FileRename(srcname, dstname string) error {
-	if runtime.GOOS != `windows` {
-		return os.Rename(srcname, dstname)
-	}
-
 	from, err := syscall.UTF16PtrFromString(srcname)
 	if err != nil {
 		return err
