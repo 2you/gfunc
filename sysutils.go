@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"syscall"
 )
 
 //创建文件夹 文件夹存在或创建成功返回true 否则返回false
@@ -117,18 +116,6 @@ func WriteStr2File(filename string, content string) error {
 
 func WriteBytes2File(filename string, content []byte) error {
 	return ioutil.WriteFile(filename, content, 0660)
-}
-
-func FileRename(srcname, dstname string) error {
-	from, err := syscall.UTF16PtrFromString(srcname)
-	if err != nil {
-		return err
-	}
-	to, err := syscall.UTF16PtrFromString(dstname)
-	if err != nil {
-		return err
-	}
-	return syscall.MoveFile(from, to)
 }
 
 func MoveFile(srcname, dstname string) error {
