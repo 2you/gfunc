@@ -105,3 +105,75 @@ func Test_Str2UtcDateTime(t *testing.T) {
 	dt := Str2UtcDateTime(`2022-01-01 01:02:03`)
 	t.Log(dt)
 }
+
+func Test_ParseStrDateInLocation(t *testing.T) {
+	if dt, err := ParseStrDateInLocation(`2022-01-01`, time.UTC); err != nil {
+		t.Error(err)
+	} else {
+		t.Log(dt)
+	}
+}
+
+func Test_ParseStrDate(t *testing.T) {
+	if dt, err := ParseStrDate(`2022-01-01`); err != nil {
+		t.Error(err)
+	} else {
+		t.Log(dt)
+	}
+}
+
+func Test_StrToDate(t *testing.T) {
+	dt := StrToDate(`2022-01-01`, time.UTC)
+	t.Log(dt)
+}
+
+func Test_Str2Date(t *testing.T) {
+	dt := Str2Date(`2022-01-01`)
+	t.Log(dt)
+}
+
+func Test_Str2LocalDate(t *testing.T) {
+	dt := Str2LocalDate(`2022-01-01`)
+	t.Log(dt)
+}
+
+func Test_Str2UtcDate(t *testing.T) {
+	dt := Str2UtcDate(`2022-01-01`)
+	t.Log(dt)
+}
+
+func Test_ParseStrTimeInLocation(t *testing.T) {
+	if dt, err := ParseStrTimeInLocation(`01:02:03`, time.UTC); err != nil {
+		t.Error(err)
+	} else {
+		t.Log(dt)
+	}
+}
+
+func Test_ParseStrTime(t *testing.T) {
+	if dt, err := ParseStrTime(`01:02:03`); err != nil {
+		t.Error(err)
+	} else {
+		t.Log(dt)
+	}
+}
+
+func Test_StrToTime(t *testing.T) {
+	dt := StrToTime(`01:02:03`, time.UTC)
+	t.Log(dt)
+}
+
+func Test_Str2Time(t *testing.T) {
+	dt := Str2Time(`01:02:03`)
+	t.Log(dt)
+}
+
+func Test_Str2LocalTime(t *testing.T) {
+	dt := Str2LocalTime(`01:02:03`)
+	t.Log(dt)
+}
+
+func Test_Str2UtcTime(t *testing.T) {
+	dt := Str2UtcTime(`01:02:03`)
+	t.Log(dt)
+}

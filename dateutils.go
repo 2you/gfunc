@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-//将当前系统的时间转为字符串 精确到微秒
+// 将当前系统的时间转为字符串 精确到微秒
 func CurrTime2Str_Micro() string {
 	currTime := time.Now()
 	hour, min, sec := currTime.Clock()
@@ -14,7 +14,7 @@ func CurrTime2Str_Micro() string {
 	return sNow
 }
 
-//将当前系统的时间转为字符串 精确到毫秒
+// 将当前系统的时间转为字符串 精确到毫秒
 func CurrTime2Str_Mill() string {
 	currTime := time.Now()
 	hour, min, sec := currTime.Clock()
@@ -23,7 +23,7 @@ func CurrTime2Str_Mill() string {
 	return sNow
 }
 
-//将当前系统的时间转为字符串 精确到秒
+// 将当前系统的时间转为字符串 精确到秒
 func CurrTime2Str_Sec() string {
 	currTime := time.Now()
 	hour, min, sec := currTime.Clock()
@@ -31,7 +31,7 @@ func CurrTime2Str_Sec() string {
 	return sNow
 }
 
-//将当前系统的日期转为字符串
+// 将当前系统的日期转为字符串
 func CurrDate2Str() string {
 	currTime := time.Now()
 	year, month, day := currTime.Date()
@@ -39,7 +39,7 @@ func CurrDate2Str() string {
 	return sNow
 }
 
-//将昨天的日期转化为字符串
+// 将昨天的日期转化为字符串
 func YestodayDate2Str() string {
 	currTime := time.Now()
 	yestodayTime := currTime.AddDate(0, 0, -1)
@@ -68,17 +68,17 @@ func DateTime2Str_Micro(t time.Time) string {
 		year, month, day, hour, min, sec, microSec)
 }
 
-//将当前系统的日期时间转为字符串 精确到秒
+// 将当前系统的日期时间转为字符串 精确到秒
 func CurrDateTime2Str_Sec() string {
 	return DateTime2Str_Sec(time.Now())
 }
 
-//将当前系统的日期时间转为字符串 精确到毫秒
+// 将当前系统的日期时间转为字符串 精确到毫秒
 func CurrDateTime2Str_Mill() string {
 	return DateTime2Str_Mill(time.Now())
 }
 
-//将当前系统的日期时间转为字符串 精确到微秒
+// 将当前系统的日期时间转为字符串 精确到微秒
 func CurrDateTime2Str_Micro() string {
 	return DateTime2Str_Micro(time.Now())
 }
@@ -92,7 +92,7 @@ func CurrUnixNanoTime() int64 {
 }
 
 func ParseStrDateTimeInLocation(str string, location *time.Location) (time.Time, error) {
-	return time.ParseInLocation("2006-01-02 15:04:05", str, location)
+	return time.ParseInLocation(`2006-01-02 15:04:05`, str, location)
 }
 
 func ParseStrDateTime(str string) (time.Time, error) {
@@ -100,7 +100,7 @@ func ParseStrDateTime(str string) (time.Time, error) {
 }
 
 func StrToDateTime(v string, location *time.Location) time.Time {
-	tm, _ := time.ParseInLocation("2006-01-02 15:04:05", v, location)
+	tm, _ := time.ParseInLocation(`2006-01-02 15:04:05`, v, location)
 	return tm
 }
 
@@ -113,6 +113,58 @@ func Str2LocalDateTime(v string) time.Time {
 }
 
 func Str2UtcDateTime(v string) time.Time {
-	loc, _ := time.LoadLocation("UTC")
+	loc, _ := time.LoadLocation(`UTC`)
 	return StrToDateTime(v, loc)
+}
+
+func ParseStrDateInLocation(str string, location *time.Location) (time.Time, error) {
+	return time.ParseInLocation(`2006-01-02`, str, location)
+}
+
+func ParseStrDate(str string) (time.Time, error) {
+	return ParseStrDateInLocation(str, time.Local)
+}
+
+func StrToDate(v string, location *time.Location) time.Time {
+	tm, _ := time.ParseInLocation(`2006-01-02`, v, location)
+	return tm
+}
+
+func Str2Date(v string) time.Time {
+	return StrToDate(v, time.Local)
+}
+
+func Str2LocalDate(v string) time.Time {
+	return StrToDate(v, time.Local)
+}
+
+func Str2UtcDate(v string) time.Time {
+	loc, _ := time.LoadLocation(`UTC`)
+	return StrToDate(v, loc)
+}
+
+func ParseStrTimeInLocation(str string, location *time.Location) (time.Time, error) {
+	return time.ParseInLocation(`15:04:05`, str, location)
+}
+
+func ParseStrTime(str string) (time.Time, error) {
+	return ParseStrTimeInLocation(str, time.Local)
+}
+
+func StrToTime(v string, location *time.Location) time.Time {
+	tm, _ := time.ParseInLocation(`15:04:05`, v, location)
+	return tm
+}
+
+func Str2Time(v string) time.Time {
+	return StrToTime(v, time.Local)
+}
+
+func Str2LocalTime(v string) time.Time {
+	return StrToTime(v, time.Local)
+}
+
+func Str2UtcTime(v string) time.Time {
+	loc, _ := time.LoadLocation(`UTC`)
+	return StrToTime(v, loc)
 }
