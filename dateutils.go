@@ -168,3 +168,9 @@ func Str2UtcTime(v string) time.Time {
 	loc, _ := time.LoadLocation(`UTC`)
 	return StrToTime(v, loc)
 }
+
+func DateSame(tm1, tm2 time.Time) bool {
+	y1, m1, d1 := tm1.Date()
+	y2, m2, d2 := tm2.Date()
+	return y1 == y2 && m1 == m2 && d1 == d2
+}

@@ -177,3 +177,20 @@ func Test_Str2UtcTime(t *testing.T) {
 	dt := Str2UtcTime(`01:02:03`)
 	t.Log(dt)
 }
+
+func Test_DateSame(t *testing.T) {
+	tm1, _ := time.Parse(`2006-01-02 15:04:05`, `2022-08-10 02:03:04`)
+	tm2, _ := time.Parse(`2006-01-02 15:04:05`, `2022-08-10 02:03:04`)
+	same := DateSame(tm1, tm2)
+	t.Log(same)
+
+	tm1, _ = time.Parse(`2006-01-02 15:04:05`, `2022-08-10 03:04:05`)
+	tm2, _ = time.Parse(`2006-01-02 15:04:05`, `2022-08-10 02:03:04`)
+	same = DateSame(tm1, tm2)
+	t.Log(same)
+
+	tm1, _ = time.Parse(`2006-01-02 15:04:05`, `2022-08-10 02:03:04`)
+	tm2, _ = time.Parse(`2006-01-02 15:04:05`, `2022-08-11 02:03:04`)
+	same = DateSame(tm1, tm2)
+	t.Log(same)
+}
