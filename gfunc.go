@@ -165,7 +165,7 @@ func CombineSplit2Index(m, n int) (retv [][]int) {
 	return retv
 }
 
-//从m个数中选取n个数的组合个数
+// 从m个数中选取n个数的组合个数
 func CombineCount(m, n int) (ret int) {
 	ret = 0
 	for i := m; i >= n; i-- {
@@ -234,7 +234,8 @@ func HttpDataSizeGet(geturl string, headers map[string]string, params map[string
 		for k, v := range params {
 			urlValues.Set(k, v)
 		}
-		body = ioutil.NopCloser(strings.NewReader(urlValues.Encode()))
+		//body = ioutil.NopCloser(strings.NewReader(urlValues.Encode()))
+		body = io.NopCloser(strings.NewReader(urlValues.Encode()))
 	}
 	httpClient := &http.Client{}
 	httpReq, _ := http.NewRequest("GET", geturl, body)
@@ -293,7 +294,8 @@ func HttpGet(geturl string, headers map[string]string, params map[string]string)
 		if strings.Index(str, "=") == 0 {
 			str = str[1:]
 		}
-		body = ioutil.NopCloser(strings.NewReader(str))
+		//body = ioutil.NopCloser(strings.NewReader(str))
+		body = io.NopCloser(strings.NewReader(str))
 	}
 
 	httpReq, _ := http.NewRequest("GET", geturl, body)
@@ -318,12 +320,56 @@ func HttpGet(geturl string, headers map[string]string, params map[string]string)
 		// log.Println(`response status code is`, httpResp.StatusCode)
 		return nil
 	}
-	data, err := ioutil.ReadAll(httpResp.Body)
+	//data, err := ioutil.ReadAll(httpResp.Body)
+	data, err := io.ReadAll(httpResp.Body)
 	if err != nil {
 		log.Println(err)
 		return nil
 	}
 	return data
+}
+
+func HttpGetWithProxy(geturl, proxyUrl string, headers map[string]string, params map[string]string) ([]byte, error) {
+	urlVal, err := url.Parse(proxyUrl)
+	if err != nil {
+		return nil, err
+	}
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(urlVal),
+		},
+		CheckRedirect: checkRedirect,
+	}
+	var body io.Reader = nil
+	if params != nil {
+		urlValues := url.Values{}
+		for k, v := range params {
+			urlValues.Set(k, v)
+		}
+		str := urlValues.Encode()
+		if strings.Index(str, "=") == 0 {
+			str = str[1:]
+		}
+		body = io.NopCloser(strings.NewReader(str))
+	}
+	httpReq, _ := http.NewRequest("GET", geturl, body)
+	for k, v := range headers {
+		httpReq.Header.Set(k, v)
+	}
+
+	httpResp, err := httpClient.Do(httpReq)
+	if httpResp != nil {
+		defer func(Body io.ReadCloser) {
+			_ = Body.Close()
+		}(httpResp.Body)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if httpResp.StatusCode != 200 && httpResp.StatusCode != 206 {
+		return nil, fmt.Errorf(`http response code is %d`, httpResp.StatusCode)
+	}
+	return io.ReadAll(httpResp.Body)
 }
 
 func HttpPost(posturl string, headers map[string]string, params map[string]string) []byte {
@@ -337,7 +383,8 @@ func HttpPost(posturl string, headers map[string]string, params map[string]strin
 		if strings.Index(str, "=") == 0 {
 			str = str[1:]
 		}
-		body = ioutil.NopCloser(strings.NewReader(str))
+		//body = ioutil.NopCloser(strings.NewReader(str))
+		body = io.NopCloser(strings.NewReader(str))
 	}
 	httpClient := &http.Client{}
 	httpReq, _ := http.NewRequest("POST", posturl, body)
@@ -357,12 +404,54 @@ func HttpPost(posturl string, headers map[string]string, params map[string]strin
 		// log.Println(`response status code is`, httpResp.StatusCode)
 		return nil
 	}
-	data, err := ioutil.ReadAll(httpResp.Body)
+	//data, err := ioutil.ReadAll(httpResp.Body)
+	data, err := io.ReadAll(httpResp.Body)
 	if err != nil {
 		log.Println(err)
 		return nil
 	}
 	return data
+}
+
+func HttpPostWithProxy(posturl, proxyUrl string, headers map[string]string, params map[string]string) ([]byte, error) {
+	urlVal, err := url.Parse(proxyUrl)
+	if err != nil {
+		return nil, err
+	}
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(urlVal),
+		},
+		CheckRedirect: checkRedirect,
+	}
+	var body io.Reader = nil
+	if params != nil {
+		urlValues := url.Values{}
+		for k, v := range params {
+			urlValues.Set(k, v)
+		}
+		str := urlValues.Encode()
+		if strings.Index(str, "=") == 0 {
+			str = str[1:]
+		}
+		body = io.NopCloser(strings.NewReader(str))
+	}
+	httpReq, _ := http.NewRequest("POST", posturl, body)
+	httpReq.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value") //这个一定要加，不加form的值post不过去
+	for k, v := range headers {
+		httpReq.Header.Set(k, v)
+	}
+	httpResp, err := httpClient.Do(httpReq)
+	if err != nil {
+		return nil, err
+	}
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(httpResp.Body)
+	if httpResp.StatusCode != 200 && httpResp.StatusCode != 206 {
+		return nil, fmt.Errorf(`http response code is %d`, httpResp.StatusCode)
+	}
+	return io.ReadAll(httpResp.Body)
 }
 
 func IntAbs(v int) int {
@@ -542,7 +631,7 @@ func Base64Decode(v string) []byte {
 	}
 }
 
-//先base64解密再zlib解压
+// 先base64解密再zlib解压
 func ZBase64Decompress(v string) []byte {
 	z := Base64Decode(v)
 	return ZlibDecompress(z)
@@ -554,7 +643,7 @@ func ZBase64DecompressA(v string) (r []byte, e error) {
 	return r, e
 }
 
-//先zlib压缩再base64加密
+// 先zlib压缩再base64加密
 func ZBase64Compress(v []byte) string {
 	z := ZlibCompress(v)
 	return Base64Encode(z)
@@ -609,7 +698,7 @@ func AES_CBC_Base64_Encrypt(data []byte, keysize int, key, iv []byte) (string, e
 	return ret, nil
 }
 
-//aes cbc算法模式 解密
+// aes cbc算法模式 解密
 func AES_CBC_Decrypt(data []byte, keysize int, key, iv []byte) (ret []byte, err error) {
 	defer func() { //错误处理
 		if e := recover(); e != nil {
@@ -630,7 +719,7 @@ func AES_CBC_Decrypt(data []byte, keysize int, key, iv []byte) (ret []byte, err 
 	return ret, nil
 }
 
-//aes cbc算法模式 加密
+// aes cbc算法模式 加密
 func AES_CBC_Encrypt(data []byte, keysize int, key, iv []byte) (ret []byte, err error) {
 	defer func() { //错误处理
 		if e := recover(); e != nil {
