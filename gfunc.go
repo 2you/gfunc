@@ -326,6 +326,14 @@ func HttpGet(geturl string, headers map[string]string, params map[string]string)
 		log.Println(err)
 		return nil
 	}
+	sFileType := http.DetectContentType(data)
+	if strings.Contains(sFileType, `application/x-gzip`) {
+		if data, err = UnGZip(data); err != nil {
+			log.Println(err)
+			return nil
+		}
+	}
+	data = bytes.TrimPrefix(data, []byte{0xef, 0xbb, 0xbf}) //去除ZWNBSP
 	return data
 }
 
@@ -410,6 +418,14 @@ func HttpPost(posturl string, headers map[string]string, params map[string]strin
 		log.Println(err)
 		return nil
 	}
+	sFileType := http.DetectContentType(data)
+	if strings.Contains(sFileType, `application/x-gzip`) {
+		if data, err = UnGZip(data); err != nil {
+			log.Println(err)
+			return nil
+		}
+	}
+	data = bytes.TrimPrefix(data, []byte{0xef, 0xbb, 0xbf}) //去除ZWNBSP
 	return data
 }
 
