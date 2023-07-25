@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"compress/zlib"
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
@@ -17,11 +18,13 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func Utf8ToAnsi(src string) string {
@@ -283,7 +286,34 @@ func checkRedirect(req *http.Request, via []*http.Request) error {
 	return nil
 }
 
+func HttpTransport(proxyUrl string, timeoutSec, keepAliveSec int) (*http.Transport, error) {
+	defaultTransportDialContext := func(dialer *net.Dialer) func(context.Context, string, string) (net.Conn, error) {
+		return dialer.DialContext
+	}
+	urlVal, err := url.Parse(proxyUrl)
+	if err != nil {
+		return nil, err
+	}
+	return &http.Transport{
+		Proxy: http.ProxyURL(urlVal),
+		DialContext: defaultTransportDialContext(&net.Dialer{
+			Timeout:   time.Duration(timeoutSec) * time.Second,
+			KeepAlive: time.Duration(keepAliveSec) * time.Second,
+		}),
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}, nil
+}
+
 func HttpGet(geturl string, headers map[string]string, params map[string]string) []byte {
+	data, _ := HttpGetA(geturl, headers, params, nil)
+	return data
+}
+
+func HttpGetA(geturl string, headers map[string]string, params map[string]string, transport http.RoundTripper) ([]byte, error) {
 	var body io.Reader = nil
 	if params != nil {
 		urlValues := url.Values{}
@@ -302,8 +332,7 @@ func HttpGet(geturl string, headers map[string]string, params map[string]string)
 	for k, v := range headers {
 		httpReq.Header.Set(k, v)
 	}
-	httpClient := &http.Client{}
-	httpClient.CheckRedirect = checkRedirect
+	httpClient := &http.Client{Transport: transport, CheckRedirect: checkRedirect}
 	httpResp, err := httpClient.Do(httpReq)
 	if httpResp != nil {
 		defer func(Body io.ReadCloser) {
@@ -313,74 +342,43 @@ func HttpGet(geturl string, headers map[string]string, params map[string]string)
 
 	if err != nil {
 		log.Println(err)
-		return nil
+		return nil, err
 	}
 
 	if httpResp.StatusCode != 200 && httpResp.StatusCode != 206 {
-		// log.Println(`response status code is`, httpResp.StatusCode)
-		return nil
+		return nil, fmt.Errorf("response status code is %d", httpResp.StatusCode)
 	}
 	//data, err := ioutil.ReadAll(httpResp.Body)
 	data, err := io.ReadAll(httpResp.Body)
 	if err != nil {
 		log.Println(err)
-		return nil
+		return nil, err
 	}
 	sFileType := http.DetectContentType(data)
 	if strings.Contains(sFileType, `application/x-gzip`) {
 		if data, err = UnGZip(data); err != nil {
 			log.Println(err)
-			return nil
+			return nil, err
 		}
 	}
 	data = bytes.TrimPrefix(data, []byte{0xef, 0xbb, 0xbf}) //去除ZWNBSP
-	return data
+	return data, nil
 }
 
 func HttpGetWithProxy(geturl, proxyUrl string, headers map[string]string, params map[string]string) ([]byte, error) {
-	urlVal, err := url.Parse(proxyUrl)
+	trans, err := HttpTransport(proxyUrl, 30, 30)
 	if err != nil {
 		return nil, err
 	}
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyURL(urlVal),
-		},
-		CheckRedirect: checkRedirect,
-	}
-	var body io.Reader = nil
-	if params != nil {
-		urlValues := url.Values{}
-		for k, v := range params {
-			urlValues.Set(k, v)
-		}
-		str := urlValues.Encode()
-		if strings.Index(str, "=") == 0 {
-			str = str[1:]
-		}
-		body = io.NopCloser(strings.NewReader(str))
-	}
-	httpReq, _ := http.NewRequest("GET", geturl, body)
-	for k, v := range headers {
-		httpReq.Header.Set(k, v)
-	}
-
-	httpResp, err := httpClient.Do(httpReq)
-	if httpResp != nil {
-		defer func(Body io.ReadCloser) {
-			_ = Body.Close()
-		}(httpResp.Body)
-	}
-	if err != nil {
-		return nil, err
-	}
-	if httpResp.StatusCode != 200 && httpResp.StatusCode != 206 {
-		return nil, fmt.Errorf(`http response code is %d`, httpResp.StatusCode)
-	}
-	return io.ReadAll(httpResp.Body)
+	return HttpGetA(geturl, headers, params, trans)
 }
 
 func HttpPost(posturl string, headers map[string]string, params map[string]string) []byte {
+	data, _ := HttpPostA(posturl, headers, params, nil)
+	return data
+}
+
+func HttpPostA(posturl string, headers map[string]string, params map[string]string, transport http.RoundTripper) ([]byte, error) {
 	var body io.Reader = nil
 	if params != nil {
 		urlValues := url.Values{}
@@ -394,7 +392,7 @@ func HttpPost(posturl string, headers map[string]string, params map[string]strin
 		//body = ioutil.NopCloser(strings.NewReader(str))
 		body = io.NopCloser(strings.NewReader(str))
 	}
-	httpClient := &http.Client{}
+	httpClient := &http.Client{Transport: transport, CheckRedirect: checkRedirect}
 	httpReq, _ := http.NewRequest("POST", posturl, body)
 	httpReq.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value") //这个一定要加，不加form的值post不过去
 	for k, v := range headers {
@@ -403,71 +401,37 @@ func HttpPost(posturl string, headers map[string]string, params map[string]strin
 	httpResp, err := httpClient.Do(httpReq)
 	if err != nil {
 		log.Println(err.Error())
-		return nil
+		return nil, err
 	}
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
 	}(httpResp.Body)
 	if httpResp.StatusCode != 200 && httpResp.StatusCode != 206 {
-		// log.Println(`response status code is`, httpResp.StatusCode)
-		return nil
+		return nil, fmt.Errorf("response status code is %d", httpResp.StatusCode)
 	}
 	//data, err := ioutil.ReadAll(httpResp.Body)
 	data, err := io.ReadAll(httpResp.Body)
 	if err != nil {
 		log.Println(err)
-		return nil
+		return nil, err
 	}
 	sFileType := http.DetectContentType(data)
 	if strings.Contains(sFileType, `application/x-gzip`) {
 		if data, err = UnGZip(data); err != nil {
 			log.Println(err)
-			return nil
+			return nil, err
 		}
 	}
 	data = bytes.TrimPrefix(data, []byte{0xef, 0xbb, 0xbf}) //去除ZWNBSP
-	return data
+	return data, nil
 }
 
 func HttpPostWithProxy(posturl, proxyUrl string, headers map[string]string, params map[string]string) ([]byte, error) {
-	urlVal, err := url.Parse(proxyUrl)
+	trans, err := HttpTransport(proxyUrl, 30, 30)
 	if err != nil {
 		return nil, err
 	}
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyURL(urlVal),
-		},
-		CheckRedirect: checkRedirect,
-	}
-	var body io.Reader = nil
-	if params != nil {
-		urlValues := url.Values{}
-		for k, v := range params {
-			urlValues.Set(k, v)
-		}
-		str := urlValues.Encode()
-		if strings.Index(str, "=") == 0 {
-			str = str[1:]
-		}
-		body = io.NopCloser(strings.NewReader(str))
-	}
-	httpReq, _ := http.NewRequest("POST", posturl, body)
-	httpReq.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value") //这个一定要加，不加form的值post不过去
-	for k, v := range headers {
-		httpReq.Header.Set(k, v)
-	}
-	httpResp, err := httpClient.Do(httpReq)
-	if err != nil {
-		return nil, err
-	}
-	defer func(Body io.ReadCloser) {
-		_ = Body.Close()
-	}(httpResp.Body)
-	if httpResp.StatusCode != 200 && httpResp.StatusCode != 206 {
-		return nil, fmt.Errorf(`http response code is %d`, httpResp.StatusCode)
-	}
-	return io.ReadAll(httpResp.Body)
+	return HttpPostA(posturl, headers, params, trans)
 }
 
 func IntAbs(v int) int {
