@@ -15,8 +15,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/2you/gfunc/mahonia"
+	"github.com/andybalholm/brotli"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -208,18 +208,35 @@ func XorEncrypt(src []byte, key []byte) []byte {
 	return ret
 }
 
-func UnGZip(v []byte) (r []byte, e error) {
-	var b bytes.Buffer
-	b.Write(v)
-	rd, er := gzip.NewReader(&b)
+func UnGZipA(ior io.Reader) (r []byte, e error) {
+	rd, er := gzip.NewReader(ior)
 	if er != nil {
 		return nil, er
 	}
 	defer func() {
 		_ = rd.Close()
 	}()
-	return ioutil.ReadAll(rd)
+	return io.ReadAll(rd)
 }
+
+func UnGZip(v []byte) (r []byte, e error) {
+	var b bytes.Buffer
+	b.Write(v)
+	return UnGZipA(&b)
+}
+
+//func UnGZip(v []byte) (r []byte, e error) {
+//	var b bytes.Buffer
+//	b.Write(v)
+//	rd, er := gzip.NewReader(&b)
+//	if er != nil {
+//		return nil, er
+//	}
+//	defer func() {
+//		_ = rd.Close()
+//	}()
+//	return io.ReadAll(rd)
+//}
 
 func UnGZIP(v []byte) (ret []byte) {
 	ret, _ = UnGZip(v)
@@ -348,19 +365,23 @@ func HttpGetA(geturl string, headers map[string]string, params map[string]string
 	if httpResp.StatusCode != 200 && httpResp.StatusCode != 206 {
 		return nil, fmt.Errorf("response status code is %d", httpResp.StatusCode)
 	}
-	//data, err := ioutil.ReadAll(httpResp.Body)
-	data, err := io.ReadAll(httpResp.Body)
+
+	var data []byte
+	contentEncoding := httpResp.Header.Get("Content-Encoding")
+	if strings.Contains(contentEncoding, `gzip`) {
+		data, err = UnGZipA(httpResp.Body)
+	} else if strings.Contains(contentEncoding, `br`) {
+		r := brotli.NewReader(httpResp.Body)
+		data, err = io.ReadAll(r)
+	} else {
+		data, err = io.ReadAll(httpResp.Body)
+	}
+
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
-	sFileType := http.DetectContentType(data)
-	if strings.Contains(sFileType, `application/x-gzip`) {
-		if data, err = UnGZip(data); err != nil {
-			log.Println(err)
-			return nil, err
-		}
-	}
+
 	data = bytes.TrimPrefix(data, []byte{0xef, 0xbb, 0xbf}) //去除ZWNBSP
 	return data, nil
 }
@@ -409,19 +430,23 @@ func HttpPostA(posturl string, headers map[string]string, params map[string]stri
 	if httpResp.StatusCode != 200 && httpResp.StatusCode != 206 {
 		return nil, fmt.Errorf("response status code is %d", httpResp.StatusCode)
 	}
-	//data, err := ioutil.ReadAll(httpResp.Body)
-	data, err := io.ReadAll(httpResp.Body)
+
+	var data []byte
+	contentEncoding := httpResp.Header.Get("Content-Encoding")
+	if strings.Contains(contentEncoding, `gzip`) {
+		data, err = UnGZipA(httpResp.Body)
+	} else if strings.Contains(contentEncoding, `br`) {
+		r := brotli.NewReader(httpResp.Body)
+		data, err = io.ReadAll(r)
+	} else {
+		data, err = io.ReadAll(httpResp.Body)
+	}
+
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
-	sFileType := http.DetectContentType(data)
-	if strings.Contains(sFileType, `application/x-gzip`) {
-		if data, err = UnGZip(data); err != nil {
-			log.Println(err)
-			return nil, err
-		}
-	}
+
 	data = bytes.TrimPrefix(data, []byte{0xef, 0xbb, 0xbf}) //去除ZWNBSP
 	return data, nil
 }
