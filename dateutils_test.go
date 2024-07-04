@@ -194,3 +194,9 @@ func Test_DateSame(t *testing.T) {
 	same = DateSame(tm1, tm2)
 	t.Log(same)
 }
+
+func Test_ToCnTime(t *testing.T) {
+	utc := time.Now().UTC()
+	tm := ToCnTime(utc)
+	t.Log(utc, `||`, tm)
+}

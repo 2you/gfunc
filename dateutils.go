@@ -174,3 +174,11 @@ func DateSame(tm1, tm2 time.Time) bool {
 	y2, m2, d2 := tm2.Date()
 	return y1 == y2 && m1 == m2 && d1 == d2
 }
+
+func ToCnTime(tm time.Time) time.Time {
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		panic(err)
+	}
+	return tm.In(loc)
+}
