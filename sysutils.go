@@ -5,12 +5,11 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
 
-//创建文件夹 文件夹存在或创建成功返回true 否则返回false
+// 创建文件夹 文件夹存在或创建成功返回true 否则返回false
 func ForceDirectories(v string) bool {
 	if DirExist(v) {
 		return true
@@ -21,7 +20,7 @@ func ForceDirectories(v string) bool {
 	return true
 }
 
-//判断文件夹是否存在
+// 判断文件夹是否存在
 func DirExist(v string) bool {
 	fileinfo, err := os.Stat(v)
 	if err != nil {
@@ -34,7 +33,7 @@ func DirExist(v string) bool {
 	}
 }
 
-//判断文件是否存在
+// 判断文件是否存在
 func FileExist(v string) bool {
 	fileinfo, err := os.Stat(v)
 	if err != nil {
@@ -47,27 +46,22 @@ func FileExist(v string) bool {
 	}
 }
 
-//获取当前运行程序所在的路径
+// 获取当前运行程序所在的路径
 func AppFilePath() string {
-	var sFileName string
-	var err error
-	if sFileName, err = exec.LookPath(os.Args[0]); err != nil {
+	if sFileName, err := filepath.Abs(os.Args[0]); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%s", err.Error())
 		return ``
+	} else {
+		sRet, _ := filepath.Split(sFileName)
+		return sRet
 	}
-	if sFileName, err = filepath.Abs(sFileName); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%s", err.Error())
-		return ``
-	}
-	sRet, _ := filepath.Split(sFileName)
-	return sRet
 }
 
 func AppFileName() string {
 	return os.Args[0]
 }
 
-//获取文件内容
+// 获取文件内容
 func GetFileContent(filename string) ([]byte, error) {
 	fptr, err := os.Open(filename)
 	defer func() {
@@ -85,7 +79,7 @@ func GetFileContent2Str(filename string) (string, error) {
 	return string(buf), err
 }
 
-//获取文件的大小(单位是字节)
+// 获取文件的大小(单位是字节)
 func GetFileSize(filename string) int64 {
 	fileinfo, err := os.Stat(filename)
 	if err != nil && !os.IsExist(err) {
@@ -126,7 +120,7 @@ func RemoveFile(filename string) error {
 	return os.Remove(filename)
 }
 
-//根据参数获取目录下的文件名
+// 根据参数获取目录下的文件名
 func SearchFiles(dirPath string, suffixs []string, containSubDir bool) (filenames []string, err error) {
 	var finfos []fs.FileInfo
 	if finfos, err = ioutil.ReadDir(dirPath); err != nil {
