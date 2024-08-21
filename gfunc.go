@@ -14,8 +14,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/2you/gfunc/mahonia"
-	"github.com/andybalholm/brotli"
 	"io"
 	"log"
 	"net"
@@ -25,6 +23,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/2you/gfunc/mahonia"
+	"github.com/andybalholm/brotli"
 )
 
 func Utf8ToAnsi(src string) string {
@@ -415,7 +416,7 @@ func HttpPostA(posturl string, headers map[string]string, params map[string]stri
 	}
 	httpClient := &http.Client{Transport: transport, CheckRedirect: checkRedirect}
 	httpReq, _ := http.NewRequest("POST", posturl, body)
-	httpReq.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value") //这个一定要加，不加form的值post不过去
+	httpReq.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
 	for k, v := range headers {
 		httpReq.Header.Set(k, v)
 	}
@@ -457,6 +458,66 @@ func HttpPostWithProxy(posturl, proxyUrl string, headers map[string]string, para
 		return nil, err
 	}
 	return HttpPostA(posturl, headers, params, trans)
+}
+
+func HttpPostB(posturl, contentType string, headers, params map[string]string, body []byte, transport http.RoundTripper) ([]byte, error) {
+	var buf io.Reader = nil
+	if params != nil {
+		urlValues := url.Values{}
+		for k, v := range params {
+			urlValues.Set(k, v)
+		}
+		str := urlValues.Encode()
+		if strings.Index(str, `=`) == 0 {
+			str = str[1:]
+		}
+		buf = io.NopCloser(strings.NewReader(str))
+	}
+	httpClient := &http.Client{Transport: transport, CheckRedirect: checkRedirect}
+	httpReq, _ := http.NewRequest(`POST`, posturl, buf)
+	httpReq.Body = io.NopCloser(bytes.NewBuffer(body))
+	if contentType != `` {
+		httpReq.Header.Set(`Content-Type`, contentType)
+	}
+	for k, v := range headers {
+		httpReq.Header.Set(k, v)
+	}
+	httpResp, err := httpClient.Do(httpReq)
+	if err != nil {
+		log.Println(err.Error())
+		return nil, err
+	}
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(httpResp.Body)
+	if httpResp.StatusCode != 200 && httpResp.StatusCode != 206 {
+		return nil, fmt.Errorf(`response status code is %d`, httpResp.StatusCode)
+	}
+	var data []byte
+	contentEncoding := httpResp.Header.Get("Content-Encoding")
+	if strings.Contains(contentEncoding, `gzip`) {
+		data, err = UnGZipA(httpResp.Body)
+	} else if strings.Contains(contentEncoding, `br`) {
+		r := brotli.NewReader(httpResp.Body)
+		data, err = io.ReadAll(r)
+	} else {
+		data, err = io.ReadAll(httpResp.Body)
+	}
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	data = bytes.TrimPrefix(data, []byte{0xef, 0xbb, 0xbf}) //去除ZWNBSP
+	return data, nil
+}
+
+func HttpPostBWithProxy(proxyUrl, posturl, contentType string, headers, params map[string]string, body []byte) ([]byte, error) {
+	trans, err := HttpTransport(proxyUrl, 30, 30)
+	if err != nil {
+		return nil, err
+	}
+	return HttpPostB(posturl, contentType, headers, params, body, trans)
 }
 
 func IntAbs(v int) int {
